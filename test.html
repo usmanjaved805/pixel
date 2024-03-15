@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP Socket Tester</title>
+    <style>
+        /* Add some basic styling for better appearance */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        #received-messages {
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TCP Socket Tester</h1>
+    <label for="host">Server IP:</label>
+    <input type="text" id="host" value="192.168.68.131"><br>
+    <label for="port">Server Port:</label>
+    <input type="text" id="port" value="18563"><br>
+    <button onclick="connectToServer()">Connect</button>
+    <p id="connection-status">Status: Not Connected</p>
+    <label for="message">Message:</label>
+    <input type="text" id="message" value="Hello, World!"><br>
+    <button onclick="sendMessage()" id="sendButton" disabled>Send Message</button><br>
+    <textarea id="received-messages" rows="10" readonly></textarea>
+
+    <script>
+        var websocket;
+
+        function connectToServer() {
+            var host = document.getElementById("host").value;
+            var port = document.getElementById("port").value;
+
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.close();
+            }
+
+            websocket = new WebSocket("ws://" + host + ":" + port);
+
+            websocket.onopen = function(event) {
+                console.log("Connected to server");
+                document.getElementById("connection-status").innerText = "Status: Connected";
+                document.getElementById("sendButton").disabled = false;
+            };
+
+            websocket.onmessage = function(event) {
+                console.log("Received message: " + event.data);
+                document.getElementById("received-messages").value += event.data + "\n";
+            };
+
+            websocket.onerror = function(event) {
+                console.error("WebSocket error:", event);
+                document.getElementById("connection-status").innerText = "Status: Error";
+            };
+
+            websocket.onclose = function(event) {
+                console.log("Connection closed", event);
+                document.getElementById("connection-status").innerText = "Status: Not Connected";
+                document.getElementById("sendButton").disabled = true;
+            };
+        }
+
+        function sendMessage() {
+            var message = document.getElementById("message").value;
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(message);
+                console.log("Message sent: " + message);
+            } else {
+                console.error("WebSocket is not open. Message not sent.");
+                alert("WebSocket is not open. Please wait for the connection to establish before sending a message.");
+            }
+        }
+    </script>
+</body>
+</html>
