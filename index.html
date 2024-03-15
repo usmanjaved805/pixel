@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python TCP Client Code</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.9.5/brython.min.js"></script>
+</head>
+<body onload="brython()">
+    
+<script type="text/python">
+from browser import document, window
+import socket
+import threading
+import time
+
+class TCPClientApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("TCP Socket Tester")
+
+        self.host_label = document["host_label"]
+        self.host_label.text = "Server IP:"
+
+        self.host_entry = document["host_entry"]
+
+        self.port_label = document["port_label"]
+        self.port_label.text = "Server Port:"
+
+        self.port_entry = document["port_entry"]
+
+        self.connect_button = document["connect_button"]
+        self.connect_button.bind("click", self.connect)
+
+        self.status_label = document["status_label"]
+
+        self.received_messages = document["received_messages"]
+        self.received_messages.text = ""
+
+        self.messages = [
+            ('Track 1', 'CC55CC5501000001020008008300040000000000'),  
+            ('Track 2', 'CC55CC5501000001020008008300040001000000'),  
+            ('Track 3', 'CC55CC5501000001020008008300040002000000'),  
+            ('Track 4', 'CC55CC5501000001020008008300040003000000'),
+            ('Track 5', 'CC55CC5501000001020008008300040004000000'),
+            ('Pause  ', 'CC55CC5501000001020008008500040003000000'), 
+        ]
+
+        for message_name, hex_message in self.messages:
+            button = document[message_name.lower().replace(" ", "_") + "_button"]
+            button.bind("click", lambda event, m=hex_message: self.send_message(m))
+
+        self.connection = None
+
+    def connect(self, event):
+        host = self.host_entry.value.strip()
+        port = int(self.port_entry.value.strip())
+        try:
+            self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.connection.connect((host, port))
+            self.status_label.text = "Connected"
+        except Exception as e:
+            self.status_label.text = "Error: " + str(e)
+
+    def send_message(self, hex_message):
+        if self.connection is None:
+            self.status_label.text = "Not connected"
+            return
+        try:
+            message_bytes = bytes.fromhex(hex_message)
+            self.connection.sendall(message_bytes)
+            self.status_label.text = "Message sent successfully."
+        except Exception as e:
+            self.status_label.text = "Error: " + str(e)
+
+def start_client_gui():
+    app = TCPClientApp(window)
+
+def main():
+    client_thread = threading.Thread(target=start_client_gui)
+    client_thread.start()
+
+if __name__ == "__main__":
+    main()
+</script>
+
+<h1>Python TCP Client Code</h1>
+
+<label id="host_label"></label>
+<input id="host_entry" type="text" value="192.168.1.1"><br>
+
+<label id="port_label"></label>
+<input id="port_entry" type="text" value="18563"><br>
+
+<button id="connect_button">Connect</button><br>
+
+<p id="status_label">Not connected</p>
+
+<button id="track_1_button">Track 1</button>
+<button id="track_2_button">Track 2</button>
+<button id="track_3_button">Track 3</button>
+<button id="track_4_button">Track 4</button>
+<button id="track_5_button">Track 5</button>
+<button id="pause_button">Pause</button><br>
+
+<textarea id="received_messages" rows="10" cols="50" readonly></textarea>
+
+</body>
+</html>
